@@ -31056,12 +31056,51 @@ function renamed(from, to) {
     throw new Error("Function yaml." + from + " is removed in js-yaml 4. " + "Use yaml." + to + " instead, which is now safe by default.");
   };
 }
+var Type = type3;
+var Schema = schema;
+var FAILSAFE_SCHEMA = failsafe;
+var JSON_SCHEMA = json;
+var CORE_SCHEMA = core2;
+var DEFAULT_SCHEMA = _default;
 var load = loader.load;
 var loadAll = loader.loadAll;
 var dump = dumper.dump;
+var YAMLException = exception;
+var types = {
+  binary,
+  float,
+  map,
+  null: _null,
+  pairs,
+  set,
+  timestamp,
+  bool,
+  int,
+  merge,
+  omap,
+  seq,
+  str
+};
 var safeLoad = renamed("safeLoad", "load");
 var safeLoadAll = renamed("safeLoadAll", "loadAll");
 var safeDump = renamed("safeDump", "dump");
+var jsYaml = {
+  Type,
+  Schema,
+  FAILSAFE_SCHEMA,
+  JSON_SCHEMA,
+  CORE_SCHEMA,
+  DEFAULT_SCHEMA,
+  load,
+  loadAll,
+  dump,
+  YAMLException,
+  types,
+  safeLoad,
+  safeLoadAll,
+  safeDump
+};
+var js_yaml_default = jsYaml;
 
 // src/utils.ts
 var writeActionSummary = ({
@@ -31107,7 +31146,7 @@ var getSystemPromptMsg = (promptFile, promptsDirectory) => {
     throw new Error(`System prompt file not found: ${promptFile}`);
   }
   try {
-    const yamlData = load(fileContents);
+    const yamlData = js_yaml_default.load(fileContents);
     if (!yamlData || !Array.isArray(yamlData?.messages)) {
       throw new Error("Invalid YAML format in the prompt file");
     }

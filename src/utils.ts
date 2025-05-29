@@ -1,7 +1,7 @@
 import { summary } from "@actions/core";
 import * as fs from "fs";
 import * as path from "path";
-import * as yaml from "js-yaml";
+import yaml from "js-yaml";
 import type { Label, YamlData } from "./types";
 
 interface GetPromptFileFromLabelsParams {

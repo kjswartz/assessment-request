@@ -31242,19 +31242,25 @@ var main = async () => {
   if (!issueNumber || !issueBody) {
     throw new Error("This action can only be used in the context of an issue with a body.");
   }
-  const token = process.env.token || process.env.GITHUB_TOKEN || import_core2.getInput("token");
+  const token = import_core2.getInput("token");
   const owner = import_github.context?.repo?.owner;
   const repo = import_github.context?.repo?.repo;
-  const promptsDirectory = process.env.prompts_directory || import_core2.getInput("prompts_directory");
-  const aiReviewLabel = process.env.ai_review_label || import_core2.getInput("ai_review_label");
+  const promptsDirectory = import_core2.getInput("prompts_directory");
+  console.log(`Using prompts directory: ${promptsDirectory}`);
+  const aiReviewLabel = import_core2.getInput("ai_review_label");
+  console.log(`Using AI review label: ${aiReviewLabel}`);
   const labelsToPromptsMapping = process.env.labels_to_prompts_mapping || import_core2.getInput("labels_to_prompts_mapping");
+  console.log(`Using labels to prompts mapping: ${labelsToPromptsMapping}`);
   if (!token || !owner || !repo || !promptsDirectory || !aiReviewLabel || !labelsToPromptsMapping) {
     throw new Error("Required inputs are not set");
   }
   const octokit = import_github.getOctokit(token);
   const endpoint = process.env.endpoint || import_core2.getInput("endpoint");
+  console.log(`Using AI endpoint: ${endpoint}`);
   const modelName = process.env.model || import_core2.getInput("model");
+  console.log(`Using AI model: ${modelName}`);
   const maxTokens = import_core2.getInput("max_tokens") ? parseInt(import_core2.getInput("max_tokens"), 10) : undefined;
+  console.log(`Using max tokens: ${maxTokens}`);
   const issueLabels = import_github.context?.payload?.issue?.labels ?? [];
   const promptFile = getPromptFileFromLabels({
     issueLabels,
@@ -31266,6 +31272,9 @@ var main = async () => {
     return;
   }
   const promptOptions = getPromptOptions(promptFile, promptsDirectory);
+  console.log("ep: " + promptOptions.endpoint);
+  console.log("model: " + promptOptions.model);
+  console.log("tokensL " + promptOptions.maxTokens);
   console.log("Executing AI assessment...");
   const aiResponse = await run({
     token,

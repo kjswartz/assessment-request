@@ -21,18 +21,18 @@ const main = async () => {
   }
 
   // Required inputs
-  const token =
-    process.env.token || process.env.GITHUB_TOKEN || getInput("token");
+  const token = getInput("token");
   const owner = context?.repo?.owner;
   const repo = context?.repo?.repo;
 
-  const promptsDirectory =
-    process.env.prompts_directory || getInput("prompts_directory");
-  const aiReviewLabel =
-    process.env.ai_review_label || getInput("ai_review_label");
+  const promptsDirectory = getInput("prompts_directory");
+  console.log(`Using prompts directory: ${promptsDirectory}`);
+  const aiReviewLabel = getInput("ai_review_label");
+  console.log(`Using AI review label: ${aiReviewLabel}`);
   const labelsToPromptsMapping =
     process.env.labels_to_prompts_mapping ||
     getInput("labels_to_prompts_mapping");
+  console.log(`Using labels to prompts mapping: ${labelsToPromptsMapping}`);
 
   if (
     !token ||
@@ -49,11 +49,13 @@ const main = async () => {
 
   // AI configuration
   const endpoint = process.env.endpoint || getInput("endpoint");
+  console.log(`Using AI endpoint: ${endpoint}`);
   const modelName = process.env.model || getInput("model");
+  console.log(`Using AI model: ${modelName}`);
   const maxTokens = getInput("max_tokens")
     ? parseInt(getInput("max_tokens"), 10)
     : undefined;
-
+  console.log(`Using max tokens: ${maxTokens}`);
   const issueLabels: Label[] = context?.payload?.issue?.labels ?? [];
 
   // Get Prompt file based on issue labels and mapping
@@ -69,7 +71,9 @@ const main = async () => {
   }
 
   const promptOptions = getPromptOptions(promptFile, promptsDirectory);
-
+  console.log("ep: " + promptOptions.endpoint);
+  console.log("model: " + promptOptions.model);
+  console.log("tokensL " + promptOptions.maxTokens);
   console.log("Executing AI assessment...");
   const aiResponse = await run({
     token,

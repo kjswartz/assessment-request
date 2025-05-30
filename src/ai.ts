@@ -20,9 +20,11 @@ export async function run({
   content,
 }: AIConfig): Promise<string | undefined> {
   try {
-    const client = ModelClient(endpoint, new AzureKeyCredential(token), {
-      userAgentOptions: { userAgentPrefix: "github-actions-ai-inference" },
-    });
+    console.log("AI configuration:");
+    console.log(`Endpoint: ${endpoint}`);
+    console.log(`Model: ${modelName}`);
+    console.log(`Max Tokens: ${maxTokens}`);
+    const client = ModelClient(endpoint, new AzureKeyCredential(token));
 
     const response = await client.path("/chat/completions").post({
       body: {

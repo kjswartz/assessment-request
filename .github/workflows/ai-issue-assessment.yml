@@ -26,7 +26,6 @@ jobs:
         uses: ./action
         env:
           token: ${{ secrets.GITHUB_TOKEN }}
-          max_tokens: '2000'
           ai_review_label: 'request ai review'
           prompts_directory: '.github/prompts'
           labels_to_prompts_mapping: 'bug,bug-review.prompt.yml|support request,request-intake.prompt.yml'

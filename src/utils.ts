@@ -15,6 +15,20 @@ interface WriteActionSummaryParams {
   assessmentLabel: string;
 }
 
+type GetPromptOptions = (
+  promptFile: string,
+  promptsDirectory: string,
+) => {
+  systemMsg: string;
+  model: string;
+  maxTokens: number;
+  endpoint: string;
+};
+
+const MAX_TOKENS = 200;
+const AI_MODEL = "openai/gpt-4o-mini";
+const ENDPOINT = "https://models.github.ai/inference";
+
 export const writeActionSummary = ({
   promptFile,
   aiResponse,
@@ -56,7 +70,7 @@ export const getPromptFileFromLabels = ({
   let promptFile = null;
   const labelsToPromptsMappingArr = labelsToPromptsMapping.split("|");
   for (const labelPromptmapping of labelsToPromptsMappingArr) {
-    const labelPromptArr = labelPromptmapping.split(",");
+    const labelPromptArr = labelPromptmapping.split(",").map((s) => s.trim());
     const labelMatch = issueLabels.some(
       (label) => label?.name == labelPromptArr[0],
     );
@@ -69,9 +83,9 @@ export const getPromptFileFromLabels = ({
   return promptFile;
 };
 
-export const getSystemPromptMsg = (
-  promptFile: string,
-  promptsDirectory: string,
+export const getPromptOptions: GetPromptOptions = (
+  promptFile,
+  promptsDirectory,
 ) => {
   const fileContents = fs.readFileSync(
     path.resolve(process.cwd(), promptsDirectory, promptFile),
@@ -90,11 +104,16 @@ export const getSystemPromptMsg = (
     const systemMsg = yamlData.messages.find(
       (msg: { role: string }) => msg.role === "system",
     );
-    if (!systemMsg) {
+    if (!systemMsg || !systemMsg.content) {
       throw new Error("System message not found in the prompt file");
     }
     // Return the content of the system message
-    return systemMsg.content;
+    return {
+      systemMsg: systemMsg.content,
+      model: yamlData?.model || AI_MODEL,
+      maxTokens: yamlData?.modelParameters?.max_tokens || MAX_TOKENS,
+      endpoint: ENDPOINT,
+    };
   } catch (error) {
     if (error instanceof Error) {
       throw new Error("Unable to parse system prompt file: " + error.message);

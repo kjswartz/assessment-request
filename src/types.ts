@@ -8,4 +8,8 @@ export interface YamlData {
     role: "system" | "user";
     content: string;
   }[];
+  model: string;
+  modelParameters: {
+    max_tokens: number;
+  };
 }

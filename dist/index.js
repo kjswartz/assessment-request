@@ -28381,9 +28381,11 @@ async function run({
   content
 }) {
   try {
-    const client = esm_default(endpoint, new AzureKeyCredential(token), {
-      userAgentOptions: { userAgentPrefix: "github-actions-ai-inference" }
-    });
+    console.log("AI configuration:");
+    console.log(`Endpoint: ${endpoint}`);
+    console.log(`Model: ${modelName}`);
+    console.log(`Max Tokens: ${maxTokens}`);
+    const client = esm_default(endpoint, new AzureKeyCredential(token));
     const response = await client.path("/chat/completions").post({
       body: {
         messages: [
@@ -31103,6 +31105,9 @@ var jsYaml = {
 var js_yaml_default = jsYaml;
 
 // src/utils.ts
+var MAX_TOKENS = 200;
+var AI_MODEL = "openai/gpt-4o-mini";
+var ENDPOINT = "https://models.github.ai/inference";
 var writeActionSummary = ({
   promptFile,
   aiResponse,
@@ -31131,7 +31136,7 @@ var getPromptFileFromLabels = ({
   let promptFile = null;
   const labelsToPromptsMappingArr = labelsToPromptsMapping.split("|");
   for (const labelPromptmapping of labelsToPromptsMappingArr) {
-    const labelPromptArr = labelPromptmapping.split(",");
+    const labelPromptArr = labelPromptmapping.split(",").map((s) => s.trim());
     const labelMatch = issueLabels.some((label) => label?.name == labelPromptArr[0]);
     if (labelMatch) {
       promptFile = labelPromptArr[1];
@@ -31140,7 +31145,7 @@ var getPromptFileFromLabels = ({
   }
   return promptFile;
 };
-var getSystemPromptMsg = (promptFile, promptsDirectory) => {
+var getPromptOptions = (promptFile, promptsDirectory) => {
   const fileContents = fs.readFileSync(path.resolve(process.cwd(), promptsDirectory, promptFile), "utf-8");
   if (!fileContents) {
     throw new Error(`System prompt file not found: ${promptFile}`);
@@ -31151,10 +31156,15 @@ var getSystemPromptMsg = (promptFile, promptsDirectory) => {
       throw new Error("Invalid YAML format in the prompt file");
     }
     const systemMsg = yamlData.messages.find((msg) => msg.role === "system");
-    if (!systemMsg) {
+    if (!systemMsg || !systemMsg.content) {
       throw new Error("System message not found in the prompt file");
     }
-    return systemMsg.content;
+    return {
+      systemMsg: systemMsg.content,
+      model: yamlData?.model || AI_MODEL,
+      maxTokens: yamlData?.modelParameters?.max_tokens || MAX_TOKENS,
+      endpoint: ENDPOINT
+    };
   } catch (error) {
     if (error instanceof Error) {
       throw new Error("Unable to parse system prompt file: " + error.message);
@@ -31241,9 +31251,9 @@ var main = async () => {
     throw new Error("Required inputs are not set");
   }
   const octokit = import_github.getOctokit(token);
-  const endpoint = process.env.endpoint || "https://models.github.ai/inference";
-  const modelName = process.env.model || "openai/gpt-4o";
-  const maxTokens = parseInt(process.env.max_tokens || "200", 10);
+  const endpoint = process.env.endpoint;
+  const modelName = process.env.model;
+  const maxTokens = process.env.max_tokens ? parseInt(process.env.max_tokens, 10) : undefined;
   const issueLabels = import_github.context?.payload?.issue?.labels ?? [];
   const promptFile = getPromptFileFromLabels({
     issueLabels,
@@ -31254,18 +31264,15 @@ var main = async () => {
     console.log("No prompt file found.");
     return;
   }
-  const systemPromptMsg = getSystemPromptMsg(promptFile, promptsDirectory);
-  if (!systemPromptMsg) {
-    throw new Error("Prompt message not found");
-  }
+  const promptOptions = getPromptOptions(promptFile, promptsDirectory);
   console.log("Executing AI assessment...");
   const aiResponse = await run({
-    systemPromptMsg,
-    endpoint,
-    modelName,
-    maxTokens,
     token,
-    content: issueBody
+    content: issueBody,
+    systemPromptMsg: promptOptions.systemMsg,
+    endpoint: endpoint ?? promptOptions.endpoint,
+    maxTokens: maxTokens ?? promptOptions.maxTokens,
+    modelName: modelName ?? promptOptions.model
   });
   if (aiResponse) {
     const commentCreated = await createIssueComment({

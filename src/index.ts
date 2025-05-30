@@ -4,7 +4,7 @@ import {
   getPromptFileFromLabels,
   getAILabelAssessmentValue,
   writeActionSummary,
-  getSystemPromptMsg,
+  getPromptOptions,
 } from "./utils";
 import { createIssueComment, addIssueLabels, removeIssueLabel } from "./api";
 import type { Label } from "./types";
@@ -42,35 +42,36 @@ const main = async () => {
   const octokit = getOctokit(token);
 
   // AI configuration
-  const endpoint = process.env.endpoint || "https://models.github.ai/inference";
-  const modelName = process.env.model || "openai/gpt-4o";
-  const maxTokens: number = parseInt(process.env.max_tokens || "200", 10);
+  const endpoint = process.env.endpoint;
+  const modelName = process.env.model;
+  const maxTokens = process.env.max_tokens
+    ? parseInt(process.env.max_tokens, 10)
+    : undefined;
 
   const issueLabels: Label[] = context?.payload?.issue?.labels ?? [];
+
   // Get Prompt file based on issue labels and mapping
   const promptFile = getPromptFileFromLabels({
     issueLabels,
     aiReviewLabel,
     labelsToPromptsMapping,
   });
+
   if (!promptFile) {
     console.log("No prompt file found.");
     return;
   }
 
-  const systemPromptMsg = getSystemPromptMsg(promptFile, promptsDirectory);
-  if (!systemPromptMsg) {
-    throw new Error("Prompt message not found");
-  }
+  const promptOptions = getPromptOptions(promptFile, promptsDirectory);
 
   console.log("Executing AI assessment...");
   const aiResponse = await run({
-    systemPromptMsg,
-    endpoint,
-    modelName,
-    maxTokens,
     token,
     content: issueBody,
+    systemPromptMsg: promptOptions.systemMsg,
+    endpoint: endpoint ?? promptOptions.endpoint,
+    maxTokens: maxTokens ?? promptOptions.maxTokens,
+    modelName: modelName ?? promptOptions.model,
   });
   if (aiResponse) {
     const commentCreated = await createIssueComment({

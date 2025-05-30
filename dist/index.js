@@ -31246,21 +31246,15 @@ var main = async () => {
   const owner = import_github.context?.repo?.owner;
   const repo = import_github.context?.repo?.repo;
   const promptsDirectory = import_core2.getInput("prompts_directory");
-  console.log(`Using prompts directory: ${promptsDirectory}`);
   const aiReviewLabel = import_core2.getInput("ai_review_label");
-  console.log(`Using AI review label: ${aiReviewLabel}`);
-  const labelsToPromptsMapping = process.env.labels_to_prompts_mapping || import_core2.getInput("labels_to_prompts_mapping");
-  console.log(`Using labels to prompts mapping: ${labelsToPromptsMapping}`);
+  const labelsToPromptsMapping = import_core2.getInput("labels_to_prompts_mapping");
   if (!token || !owner || !repo || !promptsDirectory || !aiReviewLabel || !labelsToPromptsMapping) {
     throw new Error("Required inputs are not set");
   }
   const octokit = import_github.getOctokit(token);
-  const endpoint = process.env.endpoint || import_core2.getInput("endpoint");
-  console.log(`Using AI endpoint: ${endpoint}`);
-  const modelName = process.env.model || import_core2.getInput("model");
-  console.log(`Using AI model: ${modelName}`);
+  const endpoint = import_core2.getInput("endpoint");
+  const modelName = import_core2.getInput("model");
   const maxTokens = import_core2.getInput("max_tokens") ? parseInt(import_core2.getInput("max_tokens"), 10) : undefined;
-  console.log(`Using max tokens: ${maxTokens}`);
   const issueLabels = import_github.context?.payload?.issue?.labels ?? [];
   const promptFile = getPromptFileFromLabels({
     issueLabels,
@@ -31272,17 +31266,14 @@ var main = async () => {
     return;
   }
   const promptOptions = getPromptOptions(promptFile, promptsDirectory);
-  console.log("ep: " + promptOptions.endpoint);
-  console.log("model: " + promptOptions.model);
-  console.log("tokensL " + promptOptions.maxTokens);
   console.log("Executing AI assessment...");
   const aiResponse = await run({
     token,
     content: issueBody,
     systemPromptMsg: promptOptions.systemMsg,
-    endpoint: endpoint ?? promptOptions.endpoint,
-    maxTokens: maxTokens ?? promptOptions.maxTokens,
-    modelName: modelName ?? promptOptions.model
+    endpoint: endpoint || promptOptions.endpoint,
+    maxTokens: maxTokens || promptOptions.maxTokens,
+    modelName: modelName || promptOptions.model
   });
   if (aiResponse) {
     const commentCreated = await createIssueComment({

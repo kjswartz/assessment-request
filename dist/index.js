@@ -24685,6 +24685,7 @@ var require_state = __commonJS((exports) => {
 
 // src/index.ts
 var import_github = __toESM(require_github(), 1);
+var import_core2 = __toESM(require_core(), 1);
 
 // src/ai.ts
 var core = __toESM(require_core(), 1);
@@ -31241,19 +31242,19 @@ var main = async () => {
   if (!issueNumber || !issueBody) {
     throw new Error("This action can only be used in the context of an issue with a body.");
   }
-  const token = process.env.token || process.env.GITHUB_TOKEN;
+  const token = process.env.token || process.env.GITHUB_TOKEN || import_core2.getInput("token");
   const owner = import_github.context?.repo?.owner;
   const repo = import_github.context?.repo?.repo;
-  const promptsDirectory = process.env.prompts_directory;
-  const aiReviewLabel = process.env.ai_review_label;
-  const labelsToPromptsMapping = process.env.labels_to_prompts_mapping;
+  const promptsDirectory = process.env.prompts_directory || import_core2.getInput("prompts_directory");
+  const aiReviewLabel = process.env.ai_review_label || import_core2.getInput("ai_review_label");
+  const labelsToPromptsMapping = process.env.labels_to_prompts_mapping || import_core2.getInput("labels_to_prompts_mapping");
   if (!token || !owner || !repo || !promptsDirectory || !aiReviewLabel || !labelsToPromptsMapping) {
     throw new Error("Required inputs are not set");
   }
   const octokit = import_github.getOctokit(token);
-  const endpoint = process.env.endpoint;
-  const modelName = process.env.model;
-  const maxTokens = process.env.max_tokens ? parseInt(process.env.max_tokens, 10) : undefined;
+  const endpoint = process.env.endpoint || import_core2.getInput("endpoint");
+  const modelName = process.env.model || import_core2.getInput("model");
+  const maxTokens = import_core2.getInput("max_tokens") ? parseInt(import_core2.getInput("max_tokens"), 10) : undefined;
   const issueLabels = import_github.context?.payload?.issue?.labels ?? [];
   const promptFile = getPromptFileFromLabels({
     issueLabels,

@@ -1,4 +1,5 @@
 import { context, getOctokit } from "@actions/github";
+import { getInput } from "@actions/core";
 import { run } from "./ai";
 import {
   getPromptFileFromLabels,
@@ -20,13 +21,18 @@ const main = async () => {
   }
 
   // Required inputs
-  const token = process.env.token || process.env.GITHUB_TOKEN;
+  const token =
+    process.env.token || process.env.GITHUB_TOKEN || getInput("token");
   const owner = context?.repo?.owner;
   const repo = context?.repo?.repo;
 
-  const promptsDirectory = process.env.prompts_directory;
-  const aiReviewLabel = process.env.ai_review_label;
-  const labelsToPromptsMapping = process.env.labels_to_prompts_mapping;
+  const promptsDirectory =
+    process.env.prompts_directory || getInput("prompts_directory");
+  const aiReviewLabel =
+    process.env.ai_review_label || getInput("ai_review_label");
+  const labelsToPromptsMapping =
+    process.env.labels_to_prompts_mapping ||
+    getInput("labels_to_prompts_mapping");
 
   if (
     !token ||
@@ -42,10 +48,10 @@ const main = async () => {
   const octokit = getOctokit(token);
 
   // AI configuration
-  const endpoint = process.env.endpoint;
-  const modelName = process.env.model;
-  const maxTokens = process.env.max_tokens
-    ? parseInt(process.env.max_tokens, 10)
+  const endpoint = process.env.endpoint || getInput("endpoint");
+  const modelName = process.env.model || getInput("model");
+  const maxTokens = getInput("max_tokens")
+    ? parseInt(getInput("max_tokens"), 10)
     : undefined;
 
   const issueLabels: Label[] = context?.payload?.issue?.labels ?? [];
